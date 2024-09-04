@@ -1,101 +1,118 @@
-import './App.css'; 
 import React, { useState } from 'react';
+import './App.css';
 
 function App() {
   const [consulta, setConsulta] = useState('');
-  const [historial, setHistorial] = useState([]); // Guardar el historial de consultas y respuestas
+  const [historial, setHistorial] = useState([]);
+  const [resultados, setResultados] = useState([]);
+  const [columnas, setColumnas] = useState([]);
 
   // Función para manejar el envío de la consulta
   const enviarConsulta = async () => {
-    if (consulta.trim() === '') {
-      return; // No hacer nada si el campo de consulta está vacío
-    }
+    if (consulta.trim() === '') return;
 
-    // Agregar la consulta al historial antes de hacer la petición
-    setHistorial((prevHistorial) => [
-      ...prevHistorial,
-      { tipo: 'usuario', mensaje: consulta }
-    ]);
+    // Agregar consulta al historial
+    setHistorial((prev) => [...prev, { tipo: 'usuario', mensaje: consulta }]);
 
     try {
-      const response = await fetch('https://primary-production-09ef.up.railway.app/webhook-test/linea1', { // Cambia por tu URL de webhook
+      // Enviar solicitud al webhook
+      const response = await fetch('https://primary-production-09ef.up.railway.app/webhook/linea1', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ consulta }),
       });
 
-      // Revisar si el contenido es JSON o texto
+      // Obtener tipo de contenido de la respuesta
       const contentType = response.headers.get('content-type');
       let result;
 
+      if (!response.ok) {
+        throw new Error('Error en la respuesta del servidor');
+      }
+
+      // Si la respuesta es JSON
       if (contentType && contentType.includes('application/json')) {
         result = await response.json();
-        // Asegurarse de que el campo "output" exista
-        if (result.output) {
-          setHistorial((prevHistorial) => [
-            ...prevHistorial,
-            { tipo: 'backend', mensaje: result.output }
-          ]);
+        console.log('Respuesta JSON recibida:', result);
+
+        if (Array.isArray(result)) {
+          setResultados(result);
+          setColumnas(Object.keys(result[0] || {})); // Manejar caso sin columnas
         } else {
-          setHistorial((prevHistorial) => [
-            ...prevHistorial,
-            { tipo: 'backend', mensaje: 'No se obtuvo respuesta en el campo "output".' }
+          setHistorial((prev) => [
+            ...prev,
+            { tipo: 'backend', mensaje: 'No se obtuvo respuesta válida.' },
           ]);
         }
       } else {
-        // Si no es JSON, lo tratamos como texto plano
+        // Si es una respuesta de texto
         result = await response.text();
-        setHistorial((prevHistorial) => [
-          ...prevHistorial,
-          { tipo: 'backend', mensaje: result }
-        ]);
+        setHistorial((prev) => [...prev, { tipo: 'backend', mensaje: result }]);
       }
     } catch (error) {
       console.error('Error al enviar la consulta:', error);
-      setHistorial((prevHistorial) => [
-        ...prevHistorial,
-        { tipo: 'backend', mensaje: 'Error al procesar la consulta.' }
+      setHistorial((prev) => [
+        ...prev,
+        { tipo: 'backend', mensaje: 'Error al procesar la consulta.' },
       ]);
     } finally {
-      setConsulta(''); // Limpiar el input después de enviar
+      setConsulta(''); // Limpiar input
     }
   };
 
-  // Función para manejar la tecla Enter
+  // Manejar tecla Enter
   const manejarEnter = (e) => {
     if (e.key === 'Enter') {
-      enviarConsulta(); // Si se presiona Enter, se envía la consulta
+      enviarConsulta();
     }
   };
 
   return (
-    <div className="chat-container">
-      <div className="chat-header">Chatbot SQL en Tiempo Real</div>
-
-      <div className="chatbox">
-        {/* Mostrar el historial de mensajes */}
-        {historial.map((item, index) => (
-          <div
-            key={index}
-            className={`mensaje ${item.tipo === 'usuario' ? 'usuario' : 'backend'}`}
-          >
-            {item.mensaje}
-          </div>
-        ))}
+    <div className="main-container">
+      {/* Tabla de resultados */}
+      <div className="resultados-container">
+        {resultados.length > 0 ? (
+          <table border="1">
+            <thead>
+              <tr>{columnas.map((columna, index) => <th key={index}>{columna}</th>)}</tr>
+            </thead>
+            <tbody>
+              {resultados.map((fila, index) => (
+                <tr key={index}>
+                  {columnas.map((columna, colIndex) => (
+                    <td key={colIndex}>{fila[columna]}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p>No hay resultados</p>
+        )}
       </div>
 
-      <div className="input-area">
-        <input
-          type="text"
-          id="consulta"
-          value={consulta}
-          onChange={(e) => setConsulta(e.target.value)}
-          onKeyDown={manejarEnter}
-          placeholder="Escribe tu consulta..."
-        />
-        <button onClick={enviarConsulta}>Enviar</button>
+      {/* Chat emergente */}
+      <div className="chat-container">
+        <div className="chat-header">Chatbot SQL</div>
+
+        <div className="chatbox">
+          {historial.map((item, index) => (
+            <div key={index} className={`mensaje ${item.tipo === 'usuario' ? 'usuario' : 'backend'}`}>
+              {item.mensaje}
+            </div>
+          ))}
+        </div>
+
+        <div className="input-area">
+          <input
+            type="text"
+            value={consulta}
+            onChange={(e) => setConsulta(e.target.value)}
+            onKeyDown={manejarEnter}
+            placeholder="Escribe tu consulta..."
+          />
+          <button onClick={enviarConsulta}>Enviar</button>
+        </div>
       </div>
     </div>
   );
