@@ -15,8 +15,8 @@ function App() {
     setHistorial((prev) => [...prev, { tipo: 'usuario', mensaje: consulta }]);
 
     try {
-      // Enviar solicitud al webhook
-      const response = await fetch('https://primary-production-09ef.up.railway.app/webhook/linea1', {
+      // Enviar solicitud al webhook usando la URL de la variable de entorno
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ consulta }),
@@ -43,6 +43,8 @@ function App() {
             ...prev,
             { tipo: 'backend', mensaje: 'No se obtuvo respuesta válida.' },
           ]);
+          setResultados([]); // Resetear resultados en caso de error
+          setColumnas([]);
         }
       } else {
         // Si es una respuesta de texto
@@ -55,8 +57,10 @@ function App() {
         ...prev,
         { tipo: 'backend', mensaje: 'Error al procesar la consulta.' },
       ]);
+      setResultados([]);
+      setColumnas([]);
     } finally {
-      setConsulta(''); // Limpiar input
+      setConsulta(''); // Limpiar input después de enviar
     }
   };
 
