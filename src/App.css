@@ -9,36 +9,81 @@ body {
   background-color: #f0f2f5;
 }
 
-.main-container {
-  display: flex;
-  flex-direction: column;
-  width: 90%;
-  height: 100%;
-  position: relative;
-}
-
-.resultados-container {
-  flex-grow: 1;
+.container {
+  width: 90%; /* Mantener el ancho del contenedor al 90% */
+  max-width: 1200px; /* Limitar el ancho máximo */
   background-color: #fff;
-  padding: 20px;
   border-radius: 10px;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  text-align: center; /* Centrar el texto */
+}
+
+h1 {
+  color: #333;
   margin-bottom: 20px;
 }
 
+p {
+  color: #666;
+}
+
+button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+.table-container {
+  max-height: 400px; /* Ajusta según sea necesario */
+  overflow-y: auto; /* Permite el desplazamiento vertical */
+  margin-top: 20px; /* Espacio entre el botón y la tabla */
+  width: 100%; /* Asegúrate de que el contenedor ocupe el 100% del ancho */
+}
+
 table {
-  width: 100%;
+  width: 100%; /* Asegúrate de que la tabla ocupe el 100% del ancho del contenedor */
   border-collapse: collapse;
+  margin: 0; /* Eliminar margen */
 }
 
 table th,
 table td {
-  padding: 10px;
+  padding: 12px;
   text-align: left;
+  border-bottom: 1px solid #ddd;
+  white-space: nowrap; /* Evita que el texto se divida en varias líneas */
 }
 
 table th {
-  background-color: #f2f2f2;
+  position: sticky; /* Fija el encabezado */
+  top: 0; /* Fija el encabezado en la parte superior del contenedor */
+  background-color: #007bff; /* Color de fondo del encabezado */
+  color: white; /* Color del texto del encabezado */
+  z-index: 1; /* Asegura que el encabezado esté por encima de las filas */
+}
+
+table tr:hover {
+  background-color: #f1f1f1; /* Efecto hover en filas */
+}
+
+table td {
+  color: #333;
+}
+
+/* Estilo para el mensaje de espera */
+.waiting-message {
+  font-size: 18px;
+  color: #999;
 }
 
 /* Estilos del chat */

@@ -1,125 +1,90 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 
+const API_URL = 'https://4dad-139-47-34-109.ngrok-free.app';
+
 function App() {
-  const [consulta, setConsulta] = useState('');
-  const [historial, setHistorial] = useState([]);
-  const [resultados, setResultados] = useState([]);
-  const [columnas, setColumnas] = useState([]);
+  const [datos, setDatos] = useState([]);
+  const [connectionStatus, setConnectionStatus] = useState('Desconectado');
+  const [error, setError] = useState(null);
 
-  // Función para manejar el envío de la consulta
-  const enviarConsulta = async () => {
-    if (consulta.trim() === '') return;
-
-    // Agregar consulta al historial
-    setHistorial((prev) => [...prev, { tipo: 'usuario', mensaje: consulta }]);
-
+  const fetchData = async () => {
     try {
-      // Enviar solicitud al webhook usando la URL de la variable de entorno
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ consulta }),
-      });
-
-      // Obtener tipo de contenido de la respuesta
-      const contentType = response.headers.get('content-type');
-      let result;
-
-      if (!response.ok) {
-        throw new Error('Error en la respuesta del servidor');
-      }
-
-      // Si la respuesta es JSON
-      if (contentType && contentType.includes('application/json')) {
-        result = await response.json();
-        console.log('Respuesta JSON recibida:', result);
-
-        if (Array.isArray(result)) {
-          setResultados(result);
-          setColumnas(Object.keys(result[0] || {})); // Manejar caso sin columnas
-        } else {
-          setHistorial((prev) => [
-            ...prev,
-            { tipo: 'backend', mensaje: 'No se obtuvo respuesta válida.' },
-          ]);
-          setResultados([]); // Resetear resultados en caso de error
-          setColumnas([]);
+      const response = await fetch(`${API_URL}/get-data`, {
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
         }
-      } else {
-        // Si es una respuesta de texto
-        result = await response.text();
-        setHistorial((prev) => [...prev, { tipo: 'backend', mensaje: result }]);
+      });
+      console.log('Respuesta del servidor:', response);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
+      const data = await response.json();
+      console.log('Datos recibidos:', data);
+      
+      setDatos(data);
+      setConnectionStatus('Conectado');
+      setError(null);
     } catch (error) {
-      console.error('Error al enviar la consulta:', error);
-      setHistorial((prev) => [
-        ...prev,
-        { tipo: 'backend', mensaje: 'Error al procesar la consulta.' },
-      ]);
-      setResultados([]);
-      setColumnas([]);
-    } finally {
-      setConsulta(''); // Limpiar input después de enviar
+      console.error('Error al obtener datos:', error);
+      setConnectionStatus('Error de conexión');
+      setError(error.message);
     }
   };
 
-  // Manejar tecla Enter
-  const manejarEnter = (e) => {
-    if (e.key === 'Enter') {
-      enviarConsulta();
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleRefresh = () => {
+    fetchData();
+  };
+
+  // Obtener los encabezados dinámicamente
+  const getHeaders = () => {
+    if (datos.length > 0) {
+      return Object.keys(datos[0]); // Obtener las claves del primer objeto
     }
+    return [];
   };
 
   return (
-    <div className="main-container">
-      {/* Tabla de resultados */}
-      <div className="resultados-container">
-        {resultados.length > 0 ? (
-          <table border="1">
+    <div className="container">
+      <h1>Datos Recibidos</h1>
+      <p>Estado de la conexión: {connectionStatus}</p>
+      {error && <p style={{color: 'red'}}>Error: {error}</p>}
+      <button onClick={handleRefresh}>Actualizar Datos</button>
+      {datos.length === 0 ? (
+        <div className="waiting-message">Esperando datos...</div>
+      ) : (
+        <div className="table-container">
+          <table>
             <thead>
-              <tr>{columnas.map((columna, index) => <th key={index}>{columna}</th>)}</tr>
+              <tr>
+                {getHeaders().map((header, index) => (
+                  <th key={index}>{header}</th>
+                ))}
+              </tr>
             </thead>
             <tbody>
-              {resultados.map((fila, index) => (
+              {datos.map((fila, index) => (
                 <tr key={index}>
-                  {columnas.map((columna, colIndex) => (
-                    <td key={colIndex}>{fila[columna]}</td>
+                  {getHeaders().map((header) => (
+                    <td key={header}>{fila[header]}</td>
                   ))}
                 </tr>
               ))}
             </tbody>
           </table>
-        ) : (
-          <p>No hay resultados</p>
-        )}
-      </div>
-
-      {/* Chat emergente */}
-      <div className="chat-container">
-        <div className="chat-header">Chatbot SQL</div>
-
-        <div className="chatbox">
-          {historial.map((item, index) => (
-            <div key={index} className={`mensaje ${item.tipo === 'usuario' ? 'usuario' : 'backend'}`}>
-              {item.mensaje}
-            </div>
-          ))}
         </div>
-
-        <div className="input-area">
-          <input
-            type="text"
-            value={consulta}
-            onChange={(e) => setConsulta(e.target.value)}
-            onKeyDown={manejarEnter}
-            placeholder="Escribe tu consulta..."
-          />
-          <button onClick={enviarConsulta}>Enviar</button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
 
 export default App;
+
