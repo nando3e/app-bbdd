@@ -16,7 +16,7 @@ function App() {
 
     try {
       // Enviar solicitud al webhook de producción
-      const response = await fetch('https://primary-production-09ef.up.railway.app/webhook-test/linea1', {
+      const response = await fetch('https://primary-production-09ef.up.railway.app/webhook/linea1', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ consulta }),
