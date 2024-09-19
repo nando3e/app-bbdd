@@ -3,23 +3,29 @@ const cors = require('cors');
 
 const app = express();
 
-app.use(cors());
+// Configurar CORS para permitir solicitudes desde el frontend
+app.use(cors({
+    origin: process.env.CORS_ORIGIN || '*', // Puedes cambiar '*' por el dominio de tu frontend en Railway si es necesario
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type'],
+}));
+
 app.use(express.json());
 
 let datosTabla = [];
 
+// Endpoint para verificar si el servidor está corriendo
 app.get('/', (req, res) => {
-    res.send('Servidor funcionando correctamente');
+    res.send('Servidor funcionando correctamente en producción');
 });
 
+// Endpoint para recibir los datos desde n8n
 app.post('/receive-data', (req, res) => {
     console.log('Datos recibidos en el backend:', req.body);
 
     // 1. Verificar si es una notificación de cambio (INSERT, UPDATE, DELETE)
     if (req.body.tipoNotificacion === 'cambio' && req.body.tabla && req.body.operacion) {
         console.log(`Cambio detectado en la tabla ${req.body.tabla} con operación ${req.body.operacion}`);
-        // Lógica para actualizar los datos locales si es necesario
-        // Aquí puedes, por ejemplo, marcar un estado que fuerce una actualización en el frontend
         return res.json({ message: 'Notificación de cambio recibida' });
     }
 
@@ -34,6 +40,7 @@ app.post('/receive-data', (req, res) => {
     }
 });
 
+// Endpoint para enviar los datos al frontend
 app.get('/get-data', (req, res) => {
     console.log('Solicitud recibida en /get-data');
     console.log('Enviando datos:', datosTabla);
@@ -46,7 +53,8 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Algo salió mal!' });
 });
 
-const PORT = process.env.PORT || 5000; // Usa el puerto de la variable de entorno o 5000 por defecto
+// Configurar el puerto asignado por Railway
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`Servidor escuchando en http://localhost:${PORT}`);
+    console.log(`Servidor escuchando en el puerto ${PORT}`);
 });
