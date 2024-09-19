@@ -3,7 +3,7 @@ import './App.css';
 
 // Definimos la URL de la API utilizando una variable de entorno
 // Si no está definida, se usará 'http://localhost:5000' para desarrollo local
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000'; // URL de la API
 
 function App() {
   // Estado para almacenar los datos recibidos
@@ -37,7 +37,7 @@ function App() {
       // Actualizamos el estado con los datos recibidos
       setDatos(data);
       setConnectionStatus('Conectado'); // Actualizamos el estado de conexión
-      setError(null);
+      setError(null); // Limpiamos cualquier error previo
     } catch (error) {
       // Manejo de errores
       console.error('Error al obtener datos:', error);
