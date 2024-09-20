@@ -36,7 +36,7 @@ function App() {
     }
   };
 
-  // Obtener los datos automáticamente cada 5 segundos
+  // Obtener los datos
   useEffect(() => {
     fetchData(); // Solo se llama al cargar el componente
   }, []);
@@ -85,9 +85,9 @@ function App() {
       <h1>Furniture Ai - Consultes</h1>
       <p>Estat de la connexió: {connectionStatus}</p>
       {error && <p style={{color: 'red'}}>Error: {error}</p>}
-      <button onClick={handleRefresh}>Actualizar manualmente</button>
+      <button onClick={handleRefresh}>Actualitzar manualment</button>
       {datos.length === 0 ? (
-        <div className="waiting-message">Esperando datos...</div>
+        <div className="waiting-message">Esperant dades...</div>
       ) : (
         <div className="table-container">
           <table>
