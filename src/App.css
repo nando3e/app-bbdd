@@ -62,6 +62,7 @@ table td {
   text-align: left;
   border-bottom: 1px solid #ddd;
   white-space: nowrap; /* Evita que el texto se divida en varias líneas */
+  font-size: 12px;
 }
 
 table th {

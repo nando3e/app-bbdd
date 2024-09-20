@@ -56,12 +56,38 @@ function App() {
     return [];
   };
 
+  // Función para manejar el evento "copy" y formatear los datos para Excel
+  const handleCopy = (e) => {
+    e.preventDefault();
+
+    const rows = Array.from(document.querySelectorAll('table tr'));
+    const copiedText = rows.map(row => {
+      const cells = Array.from(row.querySelectorAll('td, th')).map(cell => cell.innerText).join('\t');
+      return cells;
+    }).join('\n');
+
+    e.clipboardData.setData('text/plain', copiedText);
+  };
+
+  useEffect(() => {
+    const table = document.querySelector('table');
+    if (table) {
+      table.addEventListener('copy', handleCopy);
+    }
+
+    return () => {
+      if (table) {
+        table.removeEventListener('copy', handleCopy);
+      }
+    };
+  }, [datos]);
+
   return (
     <div className="container">
-      <h1>Datos Recibidos</h1>
+      <h1>Furniture Ai - Consultes</h1>
       <p>Estado de la conexión: {connectionStatus}</p>
       {error && <p style={{color: 'red'}}>Error: {error}</p>}
-      <button onClick={handleRefresh}>Actualizar Datos</button>
+      <button onClick={handleRefresh}>Actualitzar manualment</button>
       {datos.length === 0 ? (
         <div className="waiting-message">Esperando datos...</div>
       ) : (
