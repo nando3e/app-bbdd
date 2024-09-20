@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');  // Importamos 'path' para manejar rutas de archivos
 
 const app = express();
 
@@ -14,6 +15,9 @@ app.use(express.json());
 
 let datosTabla = [];
 
+// Servir los archivos estáticos del build de React
+app.use(express.static(path.join(__dirname, '../build')));  // Cambia '../build' por la ruta correcta según tu estructura
+
 // Endpoint para verificar si el servidor está corriendo
 app.get('/', (req, res) => {
     res.send('Servidor funcionando correctamente en producción');
@@ -26,8 +30,6 @@ app.post('/receive-data', (req, res) => {
     // 1. Verificar si es una notificación de cambio (INSERT, UPDATE, DELETE)
     if (req.body.tipoNotificacion === 'cambio' && req.body.tabla && req.body.operacion) {
         console.log(`Cambio detectado en la tabla ${req.body.tabla} con operación ${req.body.operacion}`);
-        // Lógica para actualizar los datos locales si es necesario
-        // Aquí puedes, por ejemplo, marcar un estado que fuerce una actualización en el frontend
         return res.json({ message: 'Notificación de cambio recibida' });
     }
 
@@ -37,7 +39,6 @@ app.post('/receive-data', (req, res) => {
         console.log('Datos guardados:', datosTabla);
         return res.json({ message: 'Datos recibidos y guardados correctamente' });
     } else {
-        // Si la solicitud no coincide con ninguno de los casos, retorna un error
         return res.status(400).json({ error: 'Formato de datos incorrecto' });
     }
 });
@@ -47,6 +48,11 @@ app.get('/get-data', (req, res) => {
     console.log('Solicitud recibida en /get-data');
     console.log('Enviando datos:', datosTabla);
     res.json(datosTabla);
+});
+
+// Ruta para servir el index.html de React
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../build', 'index.html'));  // Asegúrate de que '../build' sea la ruta correcta
 });
 
 // Manejador de errores
