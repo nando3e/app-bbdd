@@ -6,7 +6,7 @@ const API_URL = process.env.REACT_APP_API_URL;
 
 function App() {
   const [datos, setDatos] = useState([]);
-  const [connectionStatus, setConnectionStatus] = useState('Desconectado');
+  const [connectionStatus, setConnectionStatus] = useState('Desconnectat');
   const [error, setError] = useState(null);
 
   // Función para obtener los datos del backend
@@ -27,7 +27,7 @@ function App() {
       console.log('Datos recibidos:', data);
       
       setDatos(data);
-      setConnectionStatus('Conectado');
+      setConnectionStatus('Connectat');
       setError(null);
     } catch (error) {
       console.error('Error al obtener datos:', error);
@@ -38,14 +38,12 @@ function App() {
 
   // Obtener los datos automáticamente cada 5 segundos
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
+    fetchData(); // Solo se llama al cargar el componente
   }, []);
 
   // Función para refrescar los datos manualmente
   const handleRefresh = () => {
-    fetchData();
+    fetchData(); // Actualización manual
   };
 
   // Obtener los encabezados dinámicamente
@@ -85,9 +83,9 @@ function App() {
   return (
     <div className="container">
       <h1>Furniture Ai - Consultes</h1>
-      <p>Estado de la conexión: {connectionStatus}</p>
+      <p>Estat de la connexió: {connectionStatus}</p>
       {error && <p style={{color: 'red'}}>Error: {error}</p>}
-      <button onClick={handleRefresh}>Actualitzar manualment</button>
+      <button onClick={handleRefresh}>Actualizar manualmente</button>
       {datos.length === 0 ? (
         <div className="waiting-message">Esperando datos...</div>
       ) : (

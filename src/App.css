@@ -10,7 +10,7 @@ body {
 }
 
 .container {
-  width: 90%; /* Mantener el ancho del contenedor al 90% */
+  width: 100%; /* Mantener el ancho del contenedor al 100% */
   max-width: 1200px; /* Limitar el ancho máximo */
   background-color: #fff;
   border-radius: 10px;
@@ -88,7 +88,7 @@ table td {
 }
 
 /* Estilos del chat */
-.chat-container {
+/*.chat-container {
   position: fixed;
   bottom: 20px;
   right: 20px;
@@ -171,7 +171,8 @@ button:hover {
   background-color: #0056b3;
 }
 
-/* Estilos del botón flotante para abrir/cerrar el chat */
+
+/* Estilos del botón flotante para abrir/cerrar el chat *//*
 .chat-toggle-button {
   position: fixed;
   bottom: 20px;
@@ -190,7 +191,7 @@ button:hover {
   background-color: #0056b3;
 }
 
-/* Responsive para pantallas más pequeñas */
+/* Responsive para pantallas más pequeñas *//*
 @media screen and (max-width: 600px) {
   .chat-container {
     width: 100%;
@@ -210,4 +211,4 @@ button:hover {
     right: 10px;
     bottom: 10px;
   }
-}
+}*/
