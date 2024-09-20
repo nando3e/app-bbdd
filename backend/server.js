@@ -26,6 +26,8 @@ app.post('/receive-data', (req, res) => {
     // 1. Verificar si es una notificación de cambio (INSERT, UPDATE, DELETE)
     if (req.body.tipoNotificacion === 'cambio' && req.body.tabla && req.body.operacion) {
         console.log(`Cambio detectado en la tabla ${req.body.tabla} con operación ${req.body.operacion}`);
+        // Lógica para actualizar los datos locales si es necesario
+        // Aquí puedes, por ejemplo, marcar un estado que fuerce una actualización en el frontend
         return res.json({ message: 'Notificación de cambio recibida' });
     }
 
