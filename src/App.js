@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
 
 // IMPORTAR SOCKET.IO-CLIENT
@@ -15,10 +15,6 @@ function App() {
   const [startCell, setStartCell] = useState(null);
 
   const tableRef = useRef(null);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   const fetchData = async () => {
     try {
@@ -39,6 +35,22 @@ function App() {
       setError(error.message);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+
+    // CONECTARSE AL SERVIDOR DE SOCKET.IO Y ESCUCHAR EL EVENTO 'dataUpdated'
+    const socket = io(API_URL);
+
+    socket.on('dataUpdated', () => {
+      fetchData();
+    });
+
+    // LIMPIAR LA CONEXIÓN DE SOCKET AL DESMONTAR EL COMPONENTE
+    return () => {
+      socket.disconnect();
+    };
+  }, []); // EJECUTAR SOLO AL MONTAR EL COMPONENTE
 
   const handleRefresh = () => {
     fetchData();
@@ -72,7 +84,8 @@ function App() {
     setSelecting(false);
   };
 
-  const copySelectedCells = () => {
+  // DEFINIR copySelectedCells UTILIZANDO useCallback PARA MEMORIZAR LA FUNCIÓN
+  const copySelectedCells = useCallback(() => {
     if (selectedCells.length === 0 || !datos) {
       alert('No hay celdas seleccionadas');
       return;
@@ -114,7 +127,7 @@ function App() {
       .catch((err) => {
         console.error('Error al copiar: ', err);
       });
-  };
+  }, [selectedCells, datos]); // AÑADIR selectedCells y datos COMO DEPENDENCIAS
 
   // Añadir listener para Ctrl+C o Command+C
   useEffect(() => {
@@ -131,7 +144,7 @@ function App() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedCells]); // Dependencia de selectedCells
+  }, [copySelectedCells]); // AÑADIR copySelectedCells COMO DEPENDENCIA
 
   // Añadir listener para detectar clic fuera de la tabla y limpiar selección
   useEffect(() => {
@@ -148,20 +161,6 @@ function App() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-
-  // CONECTARSE AL SERVIDOR DE SOCKET.IO Y ESCUCHAR EL EVENTO 'dataUpdated'
-  useEffect(() => {
-    const socket = io(API_URL);
-
-    socket.on('dataUpdated', () => {
-      fetchData();
-    });
-
-    // LIMPIAR LA CONEXIÓN DE SOCKET AL DESMONTAR EL COMPONENTE
-    return () => {
-      socket.disconnect();
-    };
-  }, []); // EJECUTAR SOLO AL MONTAR EL COMPONENTE
 
   return (
     <div className="App">
