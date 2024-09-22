@@ -44,18 +44,18 @@ button:hover {
 }
 
 .table-container {
-max-height: 400px; /* Ajusta según sea necesario */
-  overflow-y: auto; /* Permite el desplazamiento vertical */
-  margin-top: 20px; /* Espacio entre el botón y la tabla */
-  width: 100%; /* Asegúrate de que el contenedor ocupe el 100% del ancho */
+  max-height: 400px;
+  overflow-y: auto;
+  margin-top: 20px;
+  width: 100%;
 }
 
 table {
   width: 100%;
-  border-collapse: separate; /* Cambiado de collapse a separate */
-  border-spacing: 0; /* Añadido para mantener las celdas juntas */
+  border-collapse: separate;
+  border-spacing: 0;
   margin: 0;
-  table-layout: fixed; /* Cambiado de auto a fixed */
+  table-layout: auto; /* Cambiado a auto para permitir anchos de columna dinámicos */
 }
 
 table th,
@@ -63,26 +63,25 @@ table td {
   padding: 12px;
   text-align: left;
   border-bottom: 1px solid #ddd;
-  border-right: 1px solid #ddd; /* Añadido para separar visualmente las columnas */
-  overflow: hidden; /* Añadido para manejar el contenido que excede la celda */
-  text-overflow: ellipsis; /* Añadido para mostrar ... cuando el contenido es muy largo */
-  white-space: nowrap; /* Restaurado para evitar saltos de línea */
+  border-right: 1px solid #ddd;
+  white-space: normal; /* Cambiado para permitir que el texto se ajuste */
+  word-wrap: break-word; /* Permite que las palabras largas se dividan */
   font-size: 12px;
 }
 
+/* Eliminadas las propiedades overflow y text-overflow */
+
 table th {
-  position: sticky; /* Restaurado */
-  top: 0; /* Restaurado */
+  position: sticky;
+  top: 0;
   background-color: #007bff;
   color: white;
-  z-index: 1; /* Restaurado */
+  z-index: 1;
 }
 
-table, table th, table td {
-  -webkit-user-select: text;  /* Chrome, Safari */
-  -moz-user-select: text;     /* Firefox */
-  -ms-user-select: text;      /* IE10+ */
-  user-select: text;          /* Estándar */
+/* Añadido para permitir la selección vertical */
+table td {
+  user-select: all;
 }
 
 table tr:hover {
