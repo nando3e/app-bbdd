@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useTable } from 'react-table';
 import './App.css';
 
 // Usar la variable de entorno para la URL base del backend
@@ -47,38 +48,21 @@ function App() {
   };
 
   // Obtener los encabezados dinámicamente
-  const getHeaders = () => {
-    if (datos.length > 0) {
-      return Object.keys(datos[0]); // Obtener las claves del primer objeto
-    }
-    return [];
-  };
+  const columns = useMemo(() => {
+    if (datos.length === 0) return [];
+    return Object.keys(datos[0]).map(key => ({
+      Header: key,
+      accessor: key,
+    }));
+  }, [datos]);
 
-  // Función para manejar el evento "copy" y formatear los datos para Excel
-  /*const handleCopy = (e) => {
-    e.preventDefault();
-
-    const rows = Array.from(document.querySelectorAll('table tr'));
-    const copiedText = rows.map(row => {
-      const cells = Array.from(row.querySelectorAll('td, th')).map(cell => cell.innerText).join('\t');
-      return cells;
-    }).join('\n');
-
-    e.clipboardData.setData('text/plain', copiedText);
-  };*/
-
-  /*useEffect(() => {
-    const table = document.querySelector('table');
-    if (table) {
-      table.addEventListener('copy', handleCopy);
-    }
-
-    return () => {
-      if (table) {
-        table.removeEventListener('copy', handleCopy);
-      }
-    };
-  }, [datos]);*/
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    rows,
+    prepareRow,
+  } = useTable({ columns, data: datos });
 
   return (
     <div className="container">
@@ -90,22 +74,27 @@ function App() {
         <div className="waiting-message">Esperant dades...</div>
       ) : (
         <div className="table-container">
-          <table>
+          <table {...getTableProps()}>
             <thead>
-              <tr>
-                {getHeaders().map((header, index) => (
-                  <th key={index}>{header}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {datos.map((fila, index) => (
-                <tr key={index}>
-                  {getHeaders().map((header) => (
-                    <td key={header}>{fila[header]}</td>
+              {headerGroups.map(headerGroup => (
+                <tr {...headerGroup.getHeaderGroupProps()}>
+                  {headerGroup.headers.map(column => (
+                    <th {...column.getHeaderProps()}>{column.render('Header')}</th>
                   ))}
                 </tr>
               ))}
+            </thead>
+            <tbody {...getTableBodyProps()}>
+              {rows.map(row => {
+                prepareRow(row);
+                return (
+                  <tr {...row.getRowProps()}>
+                    {row.cells.map(cell => (
+                      <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                    ))}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
