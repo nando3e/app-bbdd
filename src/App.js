@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
-
-// IMPORTAR SOCKET.IO-CLIENT
 import io from 'socket.io-client';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -39,18 +37,16 @@ function App() {
   useEffect(() => {
     fetchData();
 
-    // CONECTARSE AL SERVIDOR DE SOCKET.IO Y ESCUCHAR EL EVENTO 'dataUpdated'
     const socket = io(API_URL);
 
     socket.on('dataUpdated', () => {
       fetchData();
     });
 
-    // LIMPIAR LA CONEXIÓN DE SOCKET AL DESMONTAR EL COMPONENTE
     return () => {
       socket.disconnect();
     };
-  }, []); // EJECUTAR SOLO AL MONTAR EL COMPONENTE
+  }, []);
 
   const handleRefresh = () => {
     fetchData();
@@ -84,7 +80,6 @@ function App() {
     setSelecting(false);
   };
 
-  // DEFINIR copySelectedCells UTILIZANDO useCallback PARA MEMORIZAR LA FUNCIÓN
   const copySelectedCells = useCallback(() => {
     if (selectedCells.length === 0 || !datos) {
       alert('No hay celdas seleccionadas');
@@ -127,9 +122,8 @@ function App() {
       .catch((err) => {
         console.error('Error al copiar: ', err);
       });
-  }, [selectedCells, datos]); // AÑADIR selectedCells y datos COMO DEPENDENCIAS
+  }, [selectedCells, datos]);
 
-  // Añadir listener para Ctrl+C o Command+C
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
@@ -140,13 +134,11 @@ function App() {
 
     window.addEventListener('keydown', handleKeyDown);
 
-    // Limpiar el listener al desmontar el componente
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [copySelectedCells]); // AÑADIR copySelectedCells COMO DEPENDENCIA
+  }, [copySelectedCells]);
 
-  // Añadir listener para detectar clic fuera de la tabla y limpiar selección
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (tableRef.current && !tableRef.current.contains(e.target)) {
@@ -156,7 +148,6 @@ function App() {
 
     document.addEventListener('mousedown', handleClickOutside);
 
-    // Limpiar el listener al desmontar el componente
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
@@ -175,7 +166,7 @@ function App() {
           Copiar selecció
         </button>
       </div>
-      {datos ? (
+      {datos && datos.length > 0 ? (
         <div
           className="table-container"
           onMouseUp={handleMouseUp}
