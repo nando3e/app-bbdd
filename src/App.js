@@ -55,7 +55,7 @@ function App() {
   };
 
   // Función para manejar el evento "copy" y formatear los datos para Excel
-  const handleCopy = (e) => {
+  /*const handleCopy = (e) => {
     e.preventDefault();
 
     const rows = Array.from(document.querySelectorAll('table tr'));
@@ -65,9 +65,9 @@ function App() {
     }).join('\n');
 
     e.clipboardData.setData('text/plain', copiedText);
-  };
+  };*/
 
-  useEffect(() => {
+  /*useEffect(() => {
     const table = document.querySelector('table');
     if (table) {
       table.addEventListener('copy', handleCopy);
@@ -78,7 +78,7 @@ function App() {
         table.removeEventListener('copy', handleCopy);
       }
     };
-  }, [datos]);
+  }, [datos]);*/
 
   return (
     <div className="container">
