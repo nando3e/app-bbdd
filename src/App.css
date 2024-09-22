@@ -44,19 +44,18 @@ button:hover {
 }
 
 .table-container {
- /* max-height: 400px; /* Ajusta según sea necesario */
- /* overflow-y: auto; /* Permite el desplazamiento vertical */
+max-height: 400px; /* Ajusta según sea necesario */
+  overflow-y: auto; /* Permite el desplazamiento vertical */
   margin-top: 20px; /* Espacio entre el botón y la tabla */
   width: 100%; /* Asegúrate de que el contenedor ocupe el 100% del ancho */
 }
 
 table {
-  width: 100%; /* Asegúrate de que la tabla ocupe el 100% del ancho del contenedor */
-  border-collapse: collapse;
-  margin: 0; /* Eliminar margen */
-  table-layout: fixed; /* Mantiene el comportamiento de celdas ajustables */
-  /*user-select: text; /* Permitir la selección de texto en las celdas */
-
+  width: 100%;
+  border-collapse: separate; /* Cambiado de collapse a separate */
+  border-spacing: 0; /* Añadido para mantener las celdas juntas */
+  margin: 0;
+  table-layout: fixed; /* Cambiado de auto a fixed */
 }
 
 table th,
@@ -64,17 +63,19 @@ table td {
   padding: 12px;
   text-align: left;
   border-bottom: 1px solid #ddd;
-  white-space: nowrap; /* Evita que el texto se divida en varias líneas */
+  border-right: 1px solid #ddd; /* Añadido para separar visualmente las columnas */
+  overflow: hidden; /* Añadido para manejar el contenido que excede la celda */
+  text-overflow: ellipsis; /* Añadido para mostrar ... cuando el contenido es muy largo */
+  white-space: nowrap; /* Restaurado para evitar saltos de línea */
   font-size: 12px;
-  /*user-select: text; /* Permitir la selección de texto en las celdas */
 }
 
 table th {
-  /*position: sticky; /* Fija el encabezado */
-  /*top: 0; /* Fija el encabezado en la parte superior del contenedor */
-  background-color: #007bff; /* Color de fondo del encabezado */
-  color: white; /* Color del texto del encabezado */
-  /* z-index: 1; /* Asegura que el encabezado esté por encima de las filas */
+  position: sticky; /* Restaurado */
+  top: 0; /* Restaurado */
+  background-color: #007bff;
+  color: white;
+  z-index: 1; /* Restaurado */
 }
 
 table, table th, table td {
@@ -83,7 +84,6 @@ table, table th, table td {
   -ms-user-select: text;      /* IE10+ */
   user-select: text;          /* Estándar */
 }
-
 
 table tr:hover {
   background-color: #f1f1f1; /* Efecto hover en filas */
@@ -183,7 +183,6 @@ button {
 button:hover {
   background-color: #0056b3;
 }
-
 
 /* Estilos del botón flotante para abrir/cerrar el chat */
 .chat-toggle-button {
