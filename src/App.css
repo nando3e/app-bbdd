@@ -44,8 +44,8 @@ button:hover {
 }
 
 .table-container {
-  max-height: 400px; /* Ajusta según sea necesario */
-  overflow-y: auto; /* Permite el desplazamiento vertical */
+ /* max-height: 400px; /* Ajusta según sea necesario */
+ /* overflow-y: auto; /* Permite el desplazamiento vertical */
   margin-top: 20px; /* Espacio entre el botón y la tabla */
   width: 100%; /* Asegúrate de que el contenedor ocupe el 100% del ancho */
 }
@@ -54,7 +54,9 @@ table {
   width: 100%; /* Asegúrate de que la tabla ocupe el 100% del ancho del contenedor */
   border-collapse: collapse;
   margin: 0; /* Eliminar margen */
-  table-layout: auto; /* Mantiene el comportamiento de celdas ajustables */
+  table-layout: fixed; /* Mantiene el comportamiento de celdas ajustables */
+  /*user-select: text; /* Permitir la selección de texto en las celdas */
+
 }
 
 table th,
@@ -64,16 +66,24 @@ table td {
   border-bottom: 1px solid #ddd;
   white-space: nowrap; /* Evita que el texto se divida en varias líneas */
   font-size: 12px;
-  user-select: text; /* Permitir la selección de texto en las celdas */
+  /*user-select: text; /* Permitir la selección de texto en las celdas */
 }
 
 table th {
-  position: sticky; /* Fija el encabezado */
-  top: 0; /* Fija el encabezado en la parte superior del contenedor */
+  /*position: sticky; /* Fija el encabezado */
+  /*top: 0; /* Fija el encabezado en la parte superior del contenedor */
   background-color: #007bff; /* Color de fondo del encabezado */
   color: white; /* Color del texto del encabezado */
-  z-index: 1; /* Asegura que el encabezado esté por encima de las filas */
+  /* z-index: 1; /* Asegura que el encabezado esté por encima de las filas */
 }
+
+table, table th, table td {
+  -webkit-user-select: text;  /* Chrome, Safari */
+  -moz-user-select: text;     /* Firefox */
+  -ms-user-select: text;      /* IE10+ */
+  user-select: text;          /* Estándar */
+}
+
 
 table tr:hover {
   background-color: #f1f1f1; /* Efecto hover en filas */
