@@ -1,103 +1,223 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useTable } from 'react-table';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 
-// Usar la variable de entorno para la URL base del backend
-const API_URL = process.env.REACT_APP_API_URL;
+// IMPORTAR SOCKET.IO-CLIENT
+import io from 'socket.io-client';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 function App() {
-  const [datos, setDatos] = useState([]);
+  const [datos, setDatos] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState('Desconnectat');
   const [error, setError] = useState(null);
+  const [selecting, setSelecting] = useState(false);
+  const [selectedCells, setSelectedCells] = useState([]);
+  const [startCell, setStartCell] = useState(null);
 
-  // Función para obtener los datos del backend
+  const tableRef = useRef(null);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   const fetchData = async () => {
     try {
       const response = await fetch(`${API_URL}/get-data`, {
         headers: {
-          'ngrok-skip-browser-warning': 'true'
-        }
+          'ngrok-skip-browser-warning': 'true',
+        },
       });
-      console.log('Respuesta del servidor:', response);
-      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
       const data = await response.json();
-      console.log('Datos recibidos:', data);
-      
       setDatos(data);
       setConnectionStatus('Connectat');
       setError(null);
     } catch (error) {
-      console.error('Error al obtener datos:', error);
       setConnectionStatus('Error de conexión');
       setError(error.message);
     }
   };
 
-  // Obtener los datos
-  useEffect(() => {
-    fetchData(); // Solo se llama al cargar el componente
-  }, []);
-
-  // Función para refrescar los datos manualmente
   const handleRefresh = () => {
-    fetchData(); // Actualización manual
+    fetchData();
   };
 
-  // Obtener los encabezados dinámicamente
-  const columns = useMemo(() => {
-    if (datos.length === 0) return [];
-    return Object.keys(datos[0]).map(key => ({
-      Header: key,
-      accessor: key,
-    }));
-  }, [datos]);
+  const handleMouseDown = (e, rowIndex, cellIndex) => {
+    e.preventDefault(); // Previene la selección de texto
+    setSelecting(true);
+    setStartCell({ rowIndex, cellIndex });
+    setSelectedCells([{ rowIndex, cellIndex }]);
+  };
 
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-  } = useTable({ columns, data: datos });
+  const handleMouseEnter = (rowIndex, cellIndex) => {
+    if (selecting) {
+      const minRow = Math.min(startCell.rowIndex, rowIndex);
+      const maxRow = Math.max(startCell.rowIndex, rowIndex);
+      const minCell = Math.min(startCell.cellIndex, cellIndex);
+      const maxCell = Math.max(startCell.cellIndex, cellIndex);
+
+      const newSelectedCells = [];
+      for (let i = minRow; i <= maxRow; i++) {
+        for (let j = minCell; j <= maxCell; j++) {
+          newSelectedCells.push({ rowIndex: i, cellIndex: j });
+        }
+      }
+      setSelectedCells(newSelectedCells);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setSelecting(false);
+  };
+
+  const copySelectedCells = () => {
+    if (selectedCells.length === 0 || !datos) {
+      alert('No hay celdas seleccionadas');
+      return;
+    }
+
+    const keys = Object.keys(datos[0]);
+
+    // Obtener los límites de filas y columnas seleccionadas
+    const rows = selectedCells.map((cell) => cell.rowIndex);
+    const cols = selectedCells.map((cell) => cell.cellIndex);
+    const minRow = Math.min(...rows);
+    const maxRow = Math.max(...rows);
+    const minCol = Math.min(...cols);
+    const maxCol = Math.max(...cols);
+
+    let copyText = '';
+
+    for (let i = minRow; i <= maxRow; i++) {
+      const rowValues = [];
+      for (let j = minCol; j <= maxCol; j++) {
+        // Verificar si la celda está seleccionada
+        const isSelected = selectedCells.some(
+          (cell) => cell.rowIndex === i && cell.cellIndex === j
+        );
+        if (isSelected) {
+          rowValues.push(datos[i][keys[j]]);
+        } else {
+          rowValues.push(''); // Celda vacía si no está seleccionada
+        }
+      }
+      copyText += rowValues.join('\t') + '\n';
+    }
+
+    navigator.clipboard
+      .writeText(copyText.trim())
+      .then(() => {
+        alert('Celdas seleccionadas copiadas al portapapeles');
+      })
+      .catch((err) => {
+        console.error('Error al copiar: ', err);
+      });
+  };
+
+  // Añadir listener para Ctrl+C o Command+C
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+        e.preventDefault();
+        copySelectedCells();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Limpiar el listener al desmontar el componente
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedCells]); // Dependencia de selectedCells
+
+  // Añadir listener para detectar clic fuera de la tabla y limpiar selección
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (tableRef.current && !tableRef.current.contains(e.target)) {
+        setSelectedCells([]);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+
+    // Limpiar el listener al desmontar el componente
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // CONECTARSE AL SERVIDOR DE SOCKET.IO Y ESCUCHAR EL EVENTO 'dataUpdated'
+  useEffect(() => {
+    const socket = io(API_URL);
+
+    socket.on('dataUpdated', () => {
+      fetchData();
+    });
+
+    // LIMPIAR LA CONEXIÓN DE SOCKET AL DESMONTAR EL COMPONENTE
+    return () => {
+      socket.disconnect();
+    };
+  }, []); // EJECUTAR SOLO AL MONTAR EL COMPONENTE
 
   return (
-    <div className="container">
+    <div className="App">
       <h1>Furniture Ai - Consultes</h1>
       <p>Estat de la connexió: {connectionStatus}</p>
-      {error && <p style={{color: 'red'}}>Error: {error}</p>}
-      <button onClick={handleRefresh}>Actualitzar manualment</button>
-      {datos.length === 0 ? (
-        <div className="waiting-message">Esperant dades...</div>
-      ) : (
-        <div className="table-container">
-          <table {...getTableProps()}>
+      {error && <p className="error">{error}</p>}
+      <div className="button-container">
+        <button onClick={handleRefresh} className="refresh-button">
+          Actualitzar manualment
+        </button>
+        <button onClick={copySelectedCells} className="copy-button">
+          Copiar selecció
+        </button>
+      </div>
+      {datos ? (
+        <div
+          className="table-container"
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+        >
+          <table ref={tableRef}>
             <thead>
-              {headerGroups.map(headerGroup => (
-                <tr {...headerGroup.getHeaderGroupProps()}>
-                  {headerGroup.headers.map(column => (
-                    <th {...column.getHeaderProps()}>{column.render('Header')}</th>
+              <tr>
+                {Object.keys(datos[0]).map((key) => (
+                  <th key={key}>{key}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {datos.map((row, rowIndex) => (
+                <tr key={rowIndex}>
+                  {Object.values(row).map((value, cellIndex) => (
+                    <td
+                      key={cellIndex}
+                      onMouseDown={(e) => handleMouseDown(e, rowIndex, cellIndex)}
+                      onMouseEnter={() => handleMouseEnter(rowIndex, cellIndex)}
+                      onMouseUp={handleMouseUp}
+                      className={
+                        selectedCells.some(
+                          (cell) =>
+                            cell.rowIndex === rowIndex && cell.cellIndex === cellIndex
+                        )
+                          ? 'selected'
+                          : ''
+                      }
+                    >
+                      {value}
+                    </td>
                   ))}
                 </tr>
               ))}
-            </thead>
-            <tbody {...getTableBodyProps()}>
-              {rows.map(row => {
-                prepareRow(row);
-                return (
-                  <tr {...row.getRowProps()}>
-                    {row.cells.map(cell => (
-                      <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-                    ))}
-                  </tr>
-                );
-              })}
             </tbody>
           </table>
         </div>
+      ) : (
+        <p>Esperant dades...</p>
       )}
     </div>
   );
