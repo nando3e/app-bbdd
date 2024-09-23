@@ -12,6 +12,13 @@ function App() {
   const [selectedCells, setSelectedCells] = useState([]);
   const [startCell, setStartCell] = useState(null);
 
+  // Estados para el autoscroll
+  const [scrollDirection, setScrollDirection] = useState({ vertical: null, horizontal: null });
+  const scrollInterval = useRef(null);
+
+  // Posición del mouse
+  const mousePosition = useRef({ x: 0, y: 0 });
+
   const tableRef = useRef(null);
 
   const fetchData = async () => {
@@ -52,6 +59,22 @@ function App() {
     fetchData();
   };
 
+  // Función para actualizar la selección
+  const updateSelection = (rowIndex, cellIndex) => {
+    const minRow = Math.min(startCell.rowIndex, rowIndex);
+    const maxRow = Math.max(startCell.rowIndex, rowIndex);
+    const minCell = Math.min(startCell.cellIndex, cellIndex);
+    const maxCell = Math.max(startCell.cellIndex, cellIndex);
+
+    const newSelectedCells = [];
+    for (let i = minRow; i <= maxRow; i++) {
+      for (let j = minCell; j <= maxCell; j++) {
+        newSelectedCells.push({ rowIndex: i, cellIndex: j });
+      }
+    }
+    setSelectedCells(newSelectedCells);
+  };
+
   const handleMouseDown = (e, rowIndex, cellIndex) => {
     e.preventDefault(); // Previene la selección de texto
     setSelecting(true);
@@ -61,23 +84,108 @@ function App() {
 
   const handleMouseEnter = (rowIndex, cellIndex) => {
     if (selecting) {
-      const minRow = Math.min(startCell.rowIndex, rowIndex);
-      const maxRow = Math.max(startCell.rowIndex, rowIndex);
-      const minCell = Math.min(startCell.cellIndex, cellIndex);
-      const maxCell = Math.max(startCell.cellIndex, cellIndex);
+      updateSelection(rowIndex, cellIndex);
+    }
+  };
 
-      const newSelectedCells = [];
-      for (let i = minRow; i <= maxRow; i++) {
-        for (let j = minCell; j <= maxCell; j++) {
-          newSelectedCells.push({ rowIndex: i, cellIndex: j });
-        }
+  const handleMouseMove = (e) => {
+    if (selecting) {
+      mousePosition.current = { x: e.clientX, y: e.clientY };
+
+      const tableRect = tableRef.current.getBoundingClientRect();
+      const offsetY = e.clientY - tableRect.top;
+      const offsetX = e.clientX - tableRect.left;
+
+      // Distancia en píxeles desde los bordes para iniciar el autoscroll
+      const edgeThreshold = 100; // Aumentado para permitir movimientos rápidos
+
+      let verticalDirection = null;
+      let horizontalDirection = null;
+
+      if (offsetY < edgeThreshold) {
+        verticalDirection = 'up';
+      } else if (offsetY > tableRect.height - edgeThreshold) {
+        verticalDirection = 'down';
       }
-      setSelectedCells(newSelectedCells);
+
+      if (offsetX < edgeThreshold) {
+        horizontalDirection = 'left';
+      } else if (offsetX > tableRect.width - edgeThreshold) {
+        horizontalDirection = 'right';
+      }
+
+      if (verticalDirection || horizontalDirection) {
+        startAutoScroll(verticalDirection, horizontalDirection);
+      } else {
+        stopAutoScroll();
+      }
+
+      // Actualizar la selección mientras se mueve el mouse
+      updateSelectionFromPoint(e.clientX, e.clientY);
     }
   };
 
   const handleMouseUp = () => {
     setSelecting(false);
+    stopAutoScroll();
+  };
+
+  const updateSelectionFromPoint = (x, y) => {
+    const elements = document.elementsFromPoint(x, y);
+    const cellElement = elements.find((el) => el.tagName === 'TD');
+
+    if (cellElement) {
+      const rowIndex = cellElement.parentElement.rowIndex - 1; // Restar 1 si tienes un thead
+      const cellIndex = cellElement.cellIndex;
+      updateSelection(rowIndex, cellIndex);
+    }
+  };
+
+  const startAutoScroll = (verticalDirection, horizontalDirection) => {
+    if (
+      scrollDirection.vertical !== verticalDirection ||
+      scrollDirection.horizontal !== horizontalDirection
+    ) {
+      setScrollDirection({ vertical: verticalDirection, horizontal: horizontalDirection });
+
+      if (scrollInterval.current) {
+        clearInterval(scrollInterval.current);
+      }
+
+      scrollInterval.current = setInterval(() => {
+        if (tableRef.current) {
+          const scrollOptions = { top: 0, left: 0, behavior: 'auto' };
+
+          if (verticalDirection === 'up') {
+            scrollOptions.top = -20;
+            mousePosition.current.y -= 20;
+          } else if (verticalDirection === 'down') {
+            scrollOptions.top = 20;
+            mousePosition.current.y += 20;
+          }
+
+          if (horizontalDirection === 'left') {
+            scrollOptions.left = -20;
+            mousePosition.current.x -= 20;
+          } else if (horizontalDirection === 'right') {
+            scrollOptions.left = 20;
+            mousePosition.current.x += 20;
+          }
+
+          tableRef.current.scrollBy(scrollOptions);
+
+          updateSelectionFromPoint(mousePosition.current.x, mousePosition.current.y);
+        }
+      }, 30); // Intervalo reducido para mayor sensibilidad
+    }
+  };
+
+  const stopAutoScroll = () => {
+    setScrollDirection({ vertical: null, horizontal: null });
+    if (scrollInterval.current) {
+      clearInterval(scrollInterval.current);
+      scrollInterval.current = null;
+    }
   };
 
   const copySelectedCells = useCallback(() => {
@@ -171,8 +279,10 @@ function App() {
           className="table-container"
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
+          onMouseMove={handleMouseMove}
+          ref={tableRef}
         >
-          <table ref={tableRef}>
+          <table>
             <thead>
               <tr>
                 {Object.keys(datos[0]).map((key) => (
@@ -188,7 +298,6 @@ function App() {
                       key={cellIndex}
                       onMouseDown={(e) => handleMouseDown(e, rowIndex, cellIndex)}
                       onMouseEnter={() => handleMouseEnter(rowIndex, cellIndex)}
-                      onMouseUp={handleMouseUp}
                       className={
                         selectedCells.some(
                           (cell) =>
@@ -214,3 +323,4 @@ function App() {
 }
 
 export default App;
+
